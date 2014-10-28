@@ -1,0 +1,88 @@
+Script started on Tue 16 Sep 2014 11:23:23 PM CDT
+]0;jcd3kf@rc13xcs213: ~/SDRIVE/CS3800/HW1jcd3kf@rc13xcs213:~/SDRIVE/CS3800/HW1$ ./HW1.sh [K
+Welcome!
+Please select a menu option.
+----------------------------
+1. Ancestry History.
+2. Who is Online.
+3. What process any user is running.
+4. Quit.
+1
+
+
+14635
+ |
+14592
+ |
+14591
+ |
+14590
+ |
+4921
+ |
+4920
+ |
+4863
+ |
+1021
+ |
+1
+
+
+Please select a menu option.
+----------------------------
+1. Ancestry History.
+2. Who is Online.
+3. What process any user is running.
+4. Quit.
+2
+
+
+mabwgf
+jcd3kf
+aj7bb
+cjutmc
+
+
+Please select a menu option.
+----------------------------
+1. Ancestry History.
+2. Who is Online.
+3. What process any user is running.
+4. Quit.
+3
+
+
+Select a User by Number.
+-----------------------
+1) mabwgf
+2) jcd3kf
+3) aj7bb
+4) cjutmc
+2
+
+
+root      4863  1021  0 22:52 ?        00:00:00 sshd: jcd3kf [priv] 
+jcd3kf    4872     1  0 22:52 ?        00:00:03 /usr/bin/perl /usr/bin/dfshack /mnt/dfs/jcd3kf/Users/jcd3kf /nethome/users/jcd3kf -o nonempty,allow_root,dev,suid
+jcd3kf    4920  4863  0 22:52 ?        00:00:00 sshd: jcd3kf@pts/4  
+jcd3kf    4921  4920  0 22:52 pts/4    00:00:00 -bash
+jcd3kf    4941     1  0 22:52 ?        00:00:00 /usr/bin/lsyncd -pidfile /tmp/jcd3kf.lsyncd -direct /usr/local/home/jcd3kf /nethome/users/jcd3kf/linuxhome
+jcd3kf   14590  4921  0 23:23 pts/4    00:00:00 script HW1
+jcd3kf   14591 14590  0 23:23 pts/4    00:00:00 script HW1
+jcd3kf   14592 14591  0 23:23 pts/7    00:00:00 bash -i
+jcd3kf   14635 14592  0 23:23 pts/7    00:00:00 /bin/bash ./HW1.sh
+jcd3kf   15949 14635  0 23:24 pts/7    00:00:00 ps -ef
+
+
+Please select a menu option.
+----------------------------
+1. Ancestry History.
+2. Who is Online.
+3. What process any user is running.
+4. Quit.
+4
+Goodbye!
+
+
+]0;jcd3kf@rc13xcs213: ~/SDRIVE/CS3800/HW1jcd3kf@rc13xcs213:~/SDRIVE/CS3800/HW1$ exit
+Script done on Tue 16 Sep 2014 11:24:15 PM CDT
