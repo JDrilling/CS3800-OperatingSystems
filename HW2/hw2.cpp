@@ -33,12 +33,10 @@ int main(int argc, char* argv[])
     replaceAlgo = argv[4];
     
     /*------------Check If files oopen-----------*/
-    cout << "Loading Program List..." << endl;
     finProgramList.open(programList.c_str());
     if(!finProgramList.good())
       throw string("Error! Program List Failed to Load.");   
      
-    cout << "Loading Program Trace..." << endl;  
     finProgramTrace.open(programTrace.c_str());
     if(!finProgramTrace.good())
       throw string("Error! Program Trace Failed to Load.");
