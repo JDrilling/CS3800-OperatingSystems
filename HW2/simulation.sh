@@ -9,7 +9,6 @@ echo "This is a total of 30 runs (3*2*5)"
 echo ""
 
 pagingMethods="clock lru fifo"
-pageSize=1
 
 for algorithm in $pagingMethods; do
   pageSize=1
