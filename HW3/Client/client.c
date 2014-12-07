@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -11,6 +12,9 @@
 #define NAME_LENGTH 50
 
 void * readServer(void* arg);
+void signalHandler(int signal);
+
+int quit = 0;
 
 int main(int argc, char* argv[])
 {
@@ -18,8 +22,10 @@ int main(int argc, char* argv[])
   char buffer[BUFFER_LENGTH];
   char username[NAME_LENGTH];
   struct hostent* host;
-  int sock, quit = 0;
+  int sock;
   pthread_t readThread;
+  
+  signal(SIGINT, signalHandler);
   
   if(argc != 2)
   {
@@ -70,10 +76,11 @@ int main(int argc, char* argv[])
   
   while(quit == 0 && fgets(&buffer, BUFFER_LENGTH, stdin) != EOF)
   {
-    if(strcmp(buffer, "/exit\n") == 0)
+    if(strcmp(buffer, "/exit\n") == 0 || strcmp(buffer, "/quit\n") == 0 || 
+       strcmp(buffer, "/part\n") == 0)
       quit = 1;
-    else
-      write(sock, buffer, BUFFER_LENGTH);
+    else if(strcmp(buffer, "\n") != 0)
+      write(sock, buffer, strlen(buffer) + 1);
   }
   
   
@@ -89,9 +96,20 @@ void * readServer(void* arg)
   
   while(read(*sock, message, BUFFER_LENGTH+NAME_LENGTH+3) != 0)
   {
-    printf("%s", message);
-    message[0] = '\0';
+    if(strcmp(message, "/exit") == 0)
+    {
+      printf("Server has shutdown. Now Exiting...\n");
+      exit(1);
+    }
+    else
+      printf("%s", message);
   }
     
   return;
+}
+
+void signalHandler(int signal)
+{
+  if(signal == SIGINT)
+    printf("Please Use /exit, /part, or /quit\n");
 }

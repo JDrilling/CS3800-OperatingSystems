@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -14,6 +15,8 @@
 
 void * readClient(void * arg);
 void writeAllClients(char* buffer, int length);
+void signalHandler(int signal);
+
 struct Client
 {
   pthread_t thread;
@@ -35,6 +38,7 @@ int main()
   int newClient;
   int i = 0;
   
+  signal(SIGINT, signalHandler);
 
   for(i = 0; i < MAX_CLIENTS; i++)
     clients[i].ID = 0;
@@ -99,7 +103,6 @@ void * readClient(void* arg)
   char returnMessage[BUFFER_LENGTH+NAME_LENGTH+3];
   char welcome[NAME_LENGTH+20];
   
-  //TODO some sort of 'handshake' to get username.
   read(client->ID, client->userName, NAME_LENGTH);
   
   pthread_mutex_lock(&clientLock);
@@ -122,7 +125,17 @@ void * readClient(void* arg)
     pthread_mutex_unlock(&clientLock);
   }
   
+  pthread_mutex_lock(&clientLock);
+    
+  sprintf(returnMessage, "%s %s", client->userName, "has disconnected.\n");
+  printf("%s", returnMessage);
+  writeAllClients(returnMessage, strlen(returnMessage));
+  close(client->ID);
   client->ID = 0;
+  
+  pthread_mutex_unlock(&clientLock);
+  
+  pthread_exit(NULL);
   return;
 }
 
@@ -134,4 +147,21 @@ void writeAllClients(char* buffer, int length)
       write(clients[i].ID, buffer, length+1);
   
   return;
+}
+
+void signalHandler(int signal)
+{
+  if(signal == SIGINT)
+  {
+    pthread_mutex_lock(&clientLock);
+    
+    printf("Server will shutdown in 10 Seconds. . .\n");
+    writeAllClients("/exit", 6);
+    
+    pthread_mutex_unlock(&clientLock);
+    
+    sleep(10);
+    
+    exit(1);
+  }
 }
