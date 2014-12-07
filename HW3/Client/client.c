@@ -81,6 +81,8 @@ int main(int argc, char* argv[])
       quit = 1;
     else if(strcmp(buffer, "\n") != 0)
       write(sock, buffer, strlen(buffer) + 1);
+
+    printf("\n");
   }
   
   
@@ -99,10 +101,11 @@ void * readServer(void* arg)
     if(strcmp(message, "/exit") == 0)
     {
       printf("Server has shutdown. Now Exiting...\n");
+      sleep(3);
       exit(1);
     }
-    else
-      printf("%s", message);
+    else    
+      printf("%s\n", message);
   }
     
   return;

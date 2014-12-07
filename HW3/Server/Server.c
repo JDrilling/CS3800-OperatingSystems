@@ -14,7 +14,7 @@
 #define NAME_LENGTH 50
 
 void * readClient(void * arg);
-void writeAllClients(char* buffer, int length);
+void writeAllClients(char* buffer, int length, int caller);
 void signalHandler(int signal);
 
 struct Client
@@ -82,7 +82,6 @@ int main()
       
       pthread_mutex_unlock(&clientLock);
       
-      
     }
   }
 
@@ -110,7 +109,7 @@ void * readClient(void* arg)
   strcat(welcome, client->userName);
   strcat(welcome, " has connected\n");
   printf("%s", welcome);
-  writeAllClients(welcome, strlen(welcome));
+  writeAllClients(welcome, strlen(welcome), client->ID);
   
   pthread_mutex_unlock(&clientLock);
   
@@ -120,7 +119,7 @@ void * readClient(void* arg)
     
     sprintf(returnMessage, "%s: %s", client->userName, buffer);
     printf("%s", returnMessage);
-    writeAllClients(returnMessage, strlen(returnMessage));
+    writeAllClients(returnMessage, strlen(returnMessage), client->ID);
     
     pthread_mutex_unlock(&clientLock);
   }
@@ -129,7 +128,7 @@ void * readClient(void* arg)
     
   sprintf(returnMessage, "%s %s", client->userName, "has disconnected.\n");
   printf("%s", returnMessage);
-  writeAllClients(returnMessage, strlen(returnMessage));
+  writeAllClients(returnMessage, strlen(returnMessage), client->ID);
   close(client->ID);
   client->ID = 0;
   
@@ -139,11 +138,11 @@ void * readClient(void* arg)
   return;
 }
 
-void writeAllClients(char* buffer, int length)
+void writeAllClients(char* buffer, int length, int caller)
 {
   int i = 0;
   for(i = 0; i < MAX_CLIENTS; i++)
-    if(clients[i].ID != 0)
+    if(clients[i].ID != 0 && clients[i].ID != caller)
       write(clients[i].ID, buffer, length+1);
   
   return;
@@ -156,7 +155,7 @@ void signalHandler(int signal)
     pthread_mutex_lock(&clientLock);
     
     printf("Server will shutdown in 10 Seconds. . .\n");
-    writeAllClients("/exit", 6);
+    writeAllClients("/exit", 6, 0);
     
     pthread_mutex_unlock(&clientLock);
     
