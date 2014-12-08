@@ -1,28 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
+//Authors: Jacob Drilling and Dzu Pham
+//Desc: "Group Talk" Assignment. Holds a chatroom for 10 people on port 6767
 
-#define SERVER_PORT 6767
-#define MAX_CLIENTS 10
-#define BUFFER_LENGTH 256
-#define NAME_LENGTH 50
 
-void * readClient(void * arg);
-void writeAllClients(char* buffer, int length, int caller);
-void signalHandler(int signal);
-
-struct Client
-{
-  pthread_t thread;
-  int ID;
-  char userName[NAME_LENGTH];
-};
+#include "Server.h"
 
 pthread_mutex_t clientLock;
 
@@ -38,11 +18,14 @@ int main()
   int newClient;
   int i = 0;
   
+  //Setup Signal Handler
   signal(SIGINT, signalHandler);
 
+  //Client ID == 0 means Client doesn't exist.
   for(i = 0; i < MAX_CLIENTS; i++)
     clients[i].ID = 0;
   
+  /*----------- Begin Socket Setup ----------------*/
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if(sock == -1)
   {
@@ -61,15 +44,18 @@ int main()
     perror("SERVER: ERROR! Could not listen for Clients");
     exit(1);
   }
-
+  /*-------------- End Socket Setup ---------------*/
+  
   //Socket set up, Listening.
   printf("SERVER: Server is listening for clients . . . \n");
 
   //While we're accepting clients...
   while((newClient = accept(sock, (struct sockaddr*) &clientAddr, &clientLen)) > 0)
   {
+    //Don't accept a Client if we have the max number
     if(clientCount < MAX_CLIENTS)
     {
+      //Lock for editing client array.
       pthread_mutex_lock(&clientLock);
       
       i = 0;
@@ -79,6 +65,7 @@ int main()
       clients[i].ID = newClient;
       clientCount++;
       pthread_create(&clients[i].thread, NULL, &readClient, &clients[i]);
+      //New read thread created for the new client.
       
       pthread_mutex_unlock(&clientLock);
       
@@ -86,15 +73,21 @@ int main()
   }
 
   
+  
+  //Close Sockets + join threads.
   for(i = 0; i < MAX_CLIENTS; i++)
-    if(clients[i].ID > 0);
+    if(clients[i].ID > 0)
+    {
+      pthread_join(clients[i].thread, NULL);
       close(clients[i].ID);
+    }
       
   close(socket);
   unlink(serverAddr.sin_addr);
 	return 0;
 }
 
+//Reads messages from Client.
 void * readClient(void* arg)
 {
   struct Client *client = arg;
@@ -104,8 +97,10 @@ void * readClient(void* arg)
   
   read(client->ID, client->userName, NAME_LENGTH);
   
+  //Lock to Access clients[]
   pthread_mutex_lock(&clientLock);
   
+  //Get Username
   strcat(welcome, client->userName);
   strcat(welcome, " has connected\n");
   printf("%s", welcome);
@@ -113,6 +108,7 @@ void * readClient(void* arg)
   
   pthread_mutex_unlock(&clientLock);
   
+  //Read messages.
   while( (read(client->ID, buffer, BUFFER_LENGTH)) != 0)
   {
     pthread_mutex_lock(&clientLock);
@@ -124,6 +120,7 @@ void * readClient(void* arg)
     pthread_mutex_unlock(&clientLock);
   }
   
+  //If client exists display leave message.
   pthread_mutex_lock(&clientLock);
     
   sprintf(returnMessage, "%s %s", client->userName, "has disconnected.\n");
@@ -134,10 +131,14 @@ void * readClient(void* arg)
   
   pthread_mutex_unlock(&clientLock);
   
+  //exit thread.
   pthread_exit(NULL);
   return;
 }
 
+
+//Writes to all clients except caller.
+//If caller == 0. Then it writes to everyone.
 void writeAllClients(char* buffer, int length, int caller)
 {
   int i = 0;
@@ -148,6 +149,8 @@ void writeAllClients(char* buffer, int length, int caller)
   return;
 }
 
+
+//Handle Cntrl+C
 void signalHandler(int signal)
 {
   if(signal == SIGINT)
@@ -156,6 +159,13 @@ void signalHandler(int signal)
     
     printf("Server will shutdown in 10 Seconds. . .\n");
     writeAllClients("/exit", 6, 0);
+    
+    int i;
+    for(i = 0; i < MAX_CLIENTS; i++)
+      if(clients[i].ID > 0)
+        close(clients[i].ID);
+      
+    close(socket);
     
     pthread_mutex_unlock(&clientLock);
     

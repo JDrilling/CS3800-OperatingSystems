@@ -1,18 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
+//Authors: Jacob Drilling and Dzu Pham.
+//Client side implementation for group chat assignment.
 
-#define SERVER_PORT 6767
-#define BUFFER_LENGTH 256
-#define NAME_LENGTH 50
-
-void * readServer(void* arg);
-void signalHandler(int signal);
+#include "client.h"
 
 int quit = 0;
 
@@ -25,8 +14,10 @@ int main(int argc, char* argv[])
   int sock;
   pthread_t readThread;
   
+  //SignalHandler.
   signal(SIGINT, signalHandler);
   
+  //--------------- BEGIN Socket Setup -----------------//
   if(argc != 2)
   {
     printf("Incorrect arguments\n");
@@ -57,23 +48,29 @@ int main(int argc, char* argv[])
     perror("Error! Failed to Connect to Server!");
     exit(1);
   }
-  
-  pthread_create(&readThread, NULL, &readServer, &sock);
+  //----------------- END Socket Setup --------------------- //
+
   
   printf("Connected to %s\n", argv[1]);
   
+  //Get uername.
   printf("Username: ");
   
+  //That Actually has letters.
   do
   {
     fgets(username, NAME_LENGTH, stdin);
   }while(username[0] == '\n');
   
+  //create reader thread.
+  pthread_create(&readThread, NULL, &readServer, &sock);
+  
   strtok(username, "\n");
   write(sock, username, NAME_LENGTH);
   
   printf("Welcome to the Chat Room, %s!\n", username);
-  
+
+  //get messages from user.
   while(quit == 0 && fgets(&buffer, BUFFER_LENGTH, stdin) != EOF)
   {
     if(strcmp(buffer, "/exit\n") == 0 || strcmp(buffer, "/quit\n") == 0 || 
@@ -83,34 +80,42 @@ int main(int argc, char* argv[])
       write(sock, buffer, strlen(buffer) + 1);
 
     printf("\n");
-  }
+  } 
   
-  
+  //Close socket.
   close(sock);
   
   return 0;
 }
 
+//Gets messages from server.
 void * readServer(void* arg)
 {
   int* sock = arg;
   char message[BUFFER_LENGTH+NAME_LENGTH+3];
   
-  while(read(*sock, message, BUFFER_LENGTH+NAME_LENGTH+3) != 0)
+  //While we're getting messages and haven't quit...
+  while(quit == 0 && read(*sock, message, BUFFER_LENGTH+NAME_LENGTH+3) != 0)
   {
-    if(strcmp(message, "/exit") == 0)
+    if(strcmp(message, "/exit") == 0) //if server says it's exiting.
     {
       printf("Server has shutdown. Now Exiting...\n");
-      sleep(3);
+      quit = 1;
+      sleep(5);
+      close(*sock);
       exit(1);
     }
     else    
       printf("%s\n", message);
   }
-    
+  
+  pthread_exit(NULL);
+  
   return;
 }
 
+
+//Don't allow cntrl+C
 void signalHandler(int signal)
 {
   if(signal == SIGINT)
